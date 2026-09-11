@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord Clone</title>
+    <style>
+        :root {
+            --bg-dark: #202225;
+            --bg-sidebar: #2f3136;
+            --bg-chat: #36393f;
+            --bg-input: #40444b;
+            --text-normal: #dcddde;
+            --text-muted: #72767d;
+            --accent: #5865f2;
+            --danger: #ed4245;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-normal);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Auth Screen */
+        #auth-screen {
+            position: absolute;
+            inset: 0;
+            background: var(--bg-dark);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .auth-box {
+            background: var(--bg-sidebar);
+            padding: 30px;
+            border-radius: 8px;
+            width: 350px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .auth-box h2 { text-align: center; color: white; }
+        
+        input, button {
+            padding: 10px;
+            border-radius: 4px;
+            border: none;
+            outline: none;
+        }
+
+        input {
+            background: var(--bg-input);
+            color: white;
+        }
+
+        button {
+            background: var(--accent);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover { opacity: 0.9; }
+
+        .toggle-auth {
+            font-size: 12px;
+            color: var(--accent);
+            cursor: pointer;
+            text-align: center;
+        }
+
+        /* App Layout */
+        #app {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* Server Sidebar */
+        .server-list {
+            width: 72px;
+            background: var(--bg-dark);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 12px;
+            gap: 10px;
+        }
+
+        .server-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--bg-sidebar);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        .server-icon:hover, .server-icon.active {
+            border-radius: 16px;
+            background: var(--accent);
+        }
+
+        /* Channel Sidebar */
+        .channel-sidebar {
+            width: 240px;
+            background: var(--bg-sidebar);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 15px;
+            font-weight: bold;
+            border-bottom: 1px solid #202225;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .channels {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+        }
+
+        .channel-item {
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            color: var(--text-muted);
+            margin-bottom: 2px;
+        }
+
+        .channel-item:hover, .channel-item.active {
+            background: var(--bg-input);
+            color: var(--text-normal);
+        }
+
+        .user-panel {
+            padding: 10px;
+            background: #292b2f;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Main Chat Area */
+        .chat-area {
+            flex: 1;
+            background: var(--bg-chat);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            padding: 15px;
+            border-bottom: 1px solid var(--bg-dark);
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            position: relative;
+        }
+
+        .message-header {
+            display: flex;
+            gap: 10px;
+            align-items: baseline;
+        }
+
+        .username { font-weight: bold; color: white; }
+        .timestamp { font-size: 10px; color: var(--text-muted); }
+        .message-content { color: var(--text-normal); word-break: break-word; }
+
+        .delete-btn {
+            background: transparent;
+            color: var(--danger);
+            font-size: 11px;
+            cursor: pointer;
+            padding: 2px 5px;
+            align-self: flex-start;
+        }
+
+        .chat-input-container {
+            padding: 20px;
+        }
+
+        .chat-input-container input {
+            width: 100%;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        /* Modal Box */
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .modal-content {
+            background: var(--bg-sidebar);
+            padding: 20px;
+            border-radius: 8px;
+            width: 300px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .badge {
+            background: var(--danger);
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 10px;
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <!-- Auth Module -->
+    <div id="auth-screen">
+        <div class="auth-box">
+            <h2 id="auth-title">Login</h2>
+            <input type="text" id="auth-username" placeholder="Username">
+            <input type="password" id="auth-password" placeholder="Password">
+            <button id="auth-btn" onclick="handleAuth()">Log In</button>
+            <span class="toggle-auth" onclick="toggleAuthMode()">Need an account? Register</span>
+        </div>
+    </div>
+
+    <!-- Main App Module -->
+    <div id="app">
+        <!-- Left Server Sidebar -->
+        <div class="server-list">
+            <div class="server-icon active" title="Home / Inbox" onclick="switchView('inbox')">
+                <span>💬</span>
+            </div>
+            <hr style="width: 30px; border: 1px solid var(--bg-input);">
+            <div id="groups-container"></div>
+            <div class="server-icon" onclick="openModal('create-group-modal')">+</div>
+        </div>
+
+        <!-- Middle Channel Sidebar -->
+        <div class="channel-sidebar">
+            <div class="sidebar-header">
+                <span id="sidebar-title">Inbox</span>
+                <button id="invite-btn" class="hidden" style="padding: 4px 8px; font-size: 12px;" onclick="openModal('invite-modal')">Invite</button>
+            </div>
+            <div class="channels" id="channel-list"></div>
+            <div class="user-panel">
+                <span id="current-user-display" class="username"></span>
+                <button onclick="logout()" style="background: var(--danger); font-size: 10px; padding: 5px;">Logout</button>
+            </div>
+        </div>
+
+        <!-- Main Chat Panel -->
+        <div class="chat-area">
+            <div class="chat-header">
+                <span id="chat-title">Welcome</span>
+            </div>
+            <div class="messages" id="message-list"></div>
+            <div class="chat-input-container">
+                <input type="text" id="chat-input" placeholder="Message..." onkeypress="handleKeyPress(event)">
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="create-group-modal" class="modal">
+        <div class="modal-content">
+            <h3>Create Group</h3>
+            <input type="text" id="group-name-input" placeholder="Group Name">
+            <button onclick="createGroup()">Create</button>
+            <button onclick="closeModals()" style="background: transparent;">Cancel</button>
+        </div>
+    </div>
+
+    <div id="invite-modal" class="modal">
+        <div class="modal-content">
+            <h3>Invite User</h3>
+            <input type="text" id="invite-username-input" placeholder="Target Username">
+            <button onclick="sendInvite()">Send Invite</button>
+            <button onclick="closeModals()" style="background: transparent;">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        // Data Structures (Stored in localStorage)
+        let users = JSON.parse(localStorage.getItem('dc_users')) || {};
+        let groups = JSON.parse(localStorage.getItem('dc_groups')) || {};
+        let currentUser = localStorage.getItem('dc_session') || null;
+
+        let isRegistering = false;
+        let currentView = 'inbox'; // 'inbox' or groupId
+
+        // Initializer
+        window.onload = () => {
+            if (currentUser && users[currentUser]) {
+                document.getElementById('auth-screen').classList.add('hidden');
+                initApp();
+            }
+        };
+
+        function saveData() {
+            localStorage.setItem('dc_users', JSON.stringify(users));
+            localStorage.setItem('dc_groups', JSON.stringify(groups));
+        }
+
+        // Auth Functions
+        function toggleAuthMode() {
+            isRegistering = !isRegistering;
+            document.getElementById('auth-title').innerText = isRegistering ? 'Register' : 'Login';
+            document.getElementById('auth-btn').innerText = isRegistering ? 'Sign Up' : 'Log In';
+            document.querySelector('.toggle-auth').innerText = isRegistering ? 'Have an account? Login' : 'Need an account? Register';
+        }
+
+        function handleAuth() {
+            const user = document.getElementById('auth-username').value.trim();
+            const pass = document.getElementById('auth-password').value.trim();
+
+            if (!user || !pass) return alert("Please fill all fields");
+
+            if (isRegistering) {
+                if (users[user]) return alert("Username already exists!");
+                users[user] = { password: pass, inbox: [] };
+                saveData();
+                alert("Account created! Please log in.");
+                toggleAuthMode();
+            } else {
+                if (!users[user] || users[user].password !== pass) {
+                    return alert("Invalid credentials!");
+                }
+                currentUser = user;
+                localStorage.setItem('dc_session', currentUser);
+                document.getElementById('auth-screen').classList.add('hidden');
+                initApp();
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('dc_session');
+            location.reload();
+        }
+
+        // Main App Functions
+        function initApp() {
+            document.getElementById('current-user-display').innerText = currentUser;
+            renderGroups();
+            switchView('inbox');
+        }
+
+        function renderGroups() {
+            const container = document.getElementById('groups-container');
+            container.innerHTML = '';
+
+            Object.keys(groups).forEach(groupId => {
+                const group = groups[groupId];
+                if (group.members.includes(currentUser)) {
+                    const el = document.createElement('div');
+                    el.className = `server-icon ${currentView === groupId ? 'active' : ''}`;
+                    el.innerText = group.name.substring(0, 2).toUpperCase();
+                    el.onclick = () => switchView(groupId);
+                    container.appendChild(el);
+                }
+            });
+        }
+
+        function switchView(view) {
+            currentView = view;
+            renderGroups();
+
+            const inviteBtn = document.getElementById('invite-btn');
+            const chatInput = document.getElementById('chat-input');
+
+            if (view === 'inbox') {
+                document.getElementById('sidebar-title').innerText = "Inbox Notifications";
+                document.getElementById('chat-title').innerText = "Inbox System Messages";
+                inviteBtn.classList.add('hidden');
+                chatInput.disabled = true;
+                chatInput.placeholder = "You cannot chat in the inbox directly.";
+                renderInbox();
+            } else {
+                const group = groups[view];
+                document.getElementById('sidebar-title').innerText = group.name;
+                document.getElementById('chat-title').innerText = `# ${group.name}`;
+                inviteBtn.classList.remove('hidden');
+                chatInput.disabled = false;
+                chatInput.placeholder = `Message #${group.name}`;
+                renderGroupChannels();
+                renderMessages();
+            }
+        }
+
+        function renderInbox() {
+            const channelList = document.getElementById('channel-list');
+            const messageList = document.getElementById('message-list');
+            
+            const inboxCount = users[currentUser].inbox ? users[currentUser].inbox.length : 0;
+            channelList.innerHTML = `<div class="channel-item active">Invites <span class="badge">${inboxCount}</span></div>`;
+
+            messageList.innerHTML = '';
+            const userInbox = users[currentUser].inbox || [];
+
+            if (userInbox.length === 0) {
+                messageList.innerHTML = `<div style="color:var(--text-muted)">No new notifications.</div>`;
+            }
+
+            userInbox.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'message';
+                div.innerHTML = `
+                    <div class="message-header">
+                        <span class="username">SYSTEM</span>
+                        <span class="timestamp">${item.time}</span>
+                    </div>
+                    <div class="message-content">${item.text}</div>
+                `;
+                messageList.appendChild(div);
+            });
+        }
+
+        function renderGroupChannels() {
+            const channelList = document.getElementById('channel-list');
+            channelList.innerHTML = `<div class="channel-item active"># general</div>`;
+        }
+
+        function renderMessages() {
+            if (currentView === 'inbox') return;
+
+            const messageList = document.getElementById('message-list');
+            messageList.innerHTML = '';
+
+            const messages = groups[currentView].messages || [];
+
+            messages.forEach((msg, index) => {
+                const div = document.createElement('div');
+                div.className = 'message';
+                
+                let deleteButtonHTML = '';
+                // STRICT PERMISSION: Only the message sender can delete their message
+                if (msg.sender === currentUser) {
+                    deleteButtonHTML = `<button class="delete-btn" onclick="deleteMessage(${index})">Delete</button>`;
+                }
+
+                div.innerHTML = `
+                    <div class="message-header">
+                        <span class="username">${msg.sender}</span>
+                        <span class="timestamp">${msg.time}</span>
+                    </div>
+                    <div class="message-content">${escapeHTML(msg.text)}</div>
+                    ${deleteButtonHTML}
+                `;
+                messageList.appendChild(div);
+            });
+
+            messageList.scrollTop = messageList.scrollHeight;
+        }
+
+        function handleKeyPress(e) {
+            if (e.key === 'Enter') {
+                const input = document.getElementById('chat-input');
+                const text = input.value.trim();
+
+                if (text && currentView !== 'inbox') {
+                    groups[currentView].messages.push({
+                        sender: currentUser,
+                        text: text,
+                        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                    });
+                    saveData();
+                    input.value = '';
+                    renderMessages();
+                }
+            }
+        }
+
+        function deleteMessage(index) {
+            if (currentView !== 'inbox') {
+                const msg = groups[currentView].messages[index];
+                // Double check user authorization
+                if (msg.sender === currentUser) {
+                    groups[currentView].messages.splice(index, 1);
+                    saveData();
+                    renderMessages();
+                }
+            }
+        }
+
+        // Group Creation and Invites
+        function createGroup() {
+            const nameInput = document.getElementById('group-name-input');
+            const name = nameInput.value.trim();
+            if (!name) return;
+
+            const groupId = 'group_' + Date.now();
+            groups[groupId] = {
+                id: groupId,
+                name: name,
+                owner: currentUser,
+                members: [currentUser],
+                messages: []
+            };
+
+            saveData();
+            nameInput.value = '';
+            closeModals();
+            switchView(groupId);
+        }
+
+        function sendInvite() {
+            const targetUser = document.getElementById('invite-username-input').value.trim();
+            if (!targetUser) return;
+
+            if (!users[targetUser]) {
+                return alert("User does not exist!");
+            }
+
+            const group = groups[currentView];
+
+            if (group.members.includes(targetUser)) {
+                return alert("User is already in this group!");
+            }
+
+            // Add member to group
+            group.members.push(targetUser);
+
+            // Send system message to recipient's inbox
+            if (!users[targetUser].inbox) users[targetUser].inbox = [];
+            
+            users[targetUser].inbox.push({
+                text: `You have been added to the group "${group.name}" by ${currentUser}.`,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            });
+
+            saveData();
+            alert(`Invited ${targetUser} successfully!`);
+            document.getElementById('invite-username-input').value = '';
+            closeModals();
+        }
+
+        // Utility Modals
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModals() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
+        function escapeHTML(str) { return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)); }
+    </script>
+</body>
+</html>
